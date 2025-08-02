@@ -463,7 +463,8 @@ def internal_error(error):
 def forbidden_error(error):
     return render_template('errors/403.html'), 403
 
-if __name__ == '__main__':
+# Initialize database and create admin user
+def init_db():
     with app.app_context():
         db.create_all()
         
@@ -481,5 +482,6 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Admin user created: username='admin', password='admin123'")
-    
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+
+# Initialize the database
+init_db() 
