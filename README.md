@@ -67,7 +67,7 @@ personal-blog/
 
 ## Live Demo
 
-Visit: [Your Railway URL here]
+Visit: https://web-production-848f.up.railway.app
 
 ---
 
