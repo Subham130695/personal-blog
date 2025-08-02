@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Reply to Contact Message - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-reply text-primary me-2"></i>Reply to Message
+                </h1>
+                <a href="{{ url_for('view_contact', contact_id=contact.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Message
+                </a>
+            </div>
+            
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-envelope me-2"></i>Reply to {{ contact.first_name }} {{ contact.last_name }}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Original Message -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Original Message:</h6>
+                        <div class="bg-light p-3 rounded">
+                            <div class="row mb-2">
+                                <div class="col-md-6">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user me-1"></i>{{ contact.first_name }} {{ contact.last_name }}
+                                    </small>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>{{ format_local_time(contact.created_at) }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <span class="badge bg-primary">{{ contact.subject }}</span>
+                            </div>
+                            <p class="mb-0">{{ contact.message }}</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Reply Form -->
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="reply_message" class="form-label">
+                                <i class="fas fa-comment me-2"></i>Your Reply
+                            </label>
+                            <textarea class="form-control" id="reply_message" name="reply_message" 
+                                      rows="8" placeholder="Type your reply here..." required></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Reply will be sent to: <strong>{{ contact.email }}</strong>
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('view_contact', contact_id=contact.id) }}" 
+                                   class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-1"></i>Send Reply
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

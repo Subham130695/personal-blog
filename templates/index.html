@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Personal Blog{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>Welcome to My Personal Blog</h1>
+        <p>Exploring ideas, sharing knowledge, and connecting through thoughtful content</p>
+        {% if not current_user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg me-3">
+                    <i class="fas fa-user-plus me-2"></i>Get Started
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                </a>
+            </div>
+        {% else %}
+            <div class="mt-4">
+                <a href="{{ url_for('new_post') }}" class="btn btn-light btn-lg me-3">
+                    <i class="fas fa-plus me-2"></i>Create Post
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Blog Posts Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="text-center mb-3">Latest Blog Posts</h2>
+                <p class="text-center text-muted">Discover insightful articles and stories</p>
+            </div>
+        </div>
+        
+        {% if posts.items %}
+            <div class="row">
+                {% for post in posts.items %}
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="card h-100">
+                            {% if post.featured_image %}
+                                <img src="{{ url_for('static', filename='uploads/' + post.featured_image) }}" 
+                                     class="card-img-top" alt="{{ post.title }}">
+                            {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body d-flex flex-column">
+                                <div class="post-meta mb-2">
+                                    <small>
+                                        <i class="fas fa-user"></i>{{ post.author.first_name }} {{ post.author.last_name }}
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-calendar"></i>{{ format_local_time(post.created_at) }}
+                                    </small>
+                                </div>
+                                
+                                <h5 class="card-title">{{ post.title }}</h5>
+                                
+                                {% if post.excerpt %}
+                                    <p class="card-text text-muted">{{ post.excerpt[:150] }}{% if post.excerpt|length > 150 %}...{% endif %}</p>
+                                {% else %}
+                                    <p class="card-text text-muted">{{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}</p>
+                                {% endif %}
+                                
+                                <div class="mt-auto">
+                                    <a href="{{ url_for('post', slug=post.slug) }}" class="btn btn-primary">
+                                        <i class="fas fa-readme me-2"></i>Read More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if posts.pages > 1 %}
+                <nav aria-label="Blog pagination" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('index', page=posts.prev_num) }}">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in posts.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != posts.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('index', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('index', page=posts.next_num) }}">
+                                    Next <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                <h3>No Posts Yet</h3>
+                <p class="text-muted">Be the first to create a blog post!</p>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('new_post') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create Your First Post
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>Join and Start Writing
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h2>Why Choose Our Blog Platform?</h2>
+                <p class="text-muted">Professional features for modern content creators</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-edit fa-2x"></i>
+                    </div>
+                    <h4>Easy Content Creation</h4>
+                    <p class="text-muted">Create and edit blog posts with our intuitive editor. Support for rich text formatting and image uploads.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                    </div>
+                    <h4>Secure & Reliable</h4>
+                    <p class="text-muted">Built with security in mind. User authentication, data validation, and secure file uploads.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-mobile-alt fa-2x"></i>
+                    </div>
+                    <h4>Responsive Design</h4>
+                    <p class="text-muted">Beautiful, responsive design that looks great on all devices - desktop, tablet, and mobile.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

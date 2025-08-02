@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Post - Personal Blog{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>Create New Blog Post
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">
+                                        <i class="fas fa-heading me-2"></i>Post Title
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="title" name="title" 
+                                           placeholder="Enter your post title..." required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="content" class="form-label">
+                                        <i class="fas fa-edit me-2"></i>Content
+                                    </label>
+                                    <textarea class="form-control" id="content" name="content" rows="15" 
+                                              placeholder="Write your blog post content here..." required></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="excerpt" class="form-label">
+                                        <i class="fas fa-quote-left me-2"></i>Excerpt
+                                    </label>
+                                    <textarea class="form-control" id="excerpt" name="excerpt" rows="4" 
+                                              placeholder="Brief description of your post..."></textarea>
+                                    <div class="form-text">A short summary that will appear in post previews.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-toggle-on me-2"></i>Status
+                                    </label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="draft">Draft</option>
+                                        <option value="published">Published</option>
+                                        <option value="archived">Archived</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="featured_image" class="form-label">
+                                        <i class="fas fa-image me-2"></i>Featured Image
+                                    </label>
+                                    <input type="file" class="form-control" id="featured_image" name="featured_image" 
+                                           accept="image/*">
+                                    <div class="form-text">Upload an image to feature with your post.</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-eye me-2"></i>Preview
+                                    </label>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6 id="preview-title" class="text-muted">Post title will appear here</h6>
+                                            <p id="preview-excerpt" class="text-muted small">Post excerpt will appear here</p>
+                                            <div id="preview-image" class="text-center py-3">
+                                                <i class="fas fa-image fa-2x text-muted"></i>
+                                                <p class="text-muted small mt-2">Featured image preview</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                                    <i class="fas fa-save me-2"></i>Save as Draft
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane me-2"></i>Publish Post
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize Summernote editor
+    $('#content').summernote({
+        height: 400,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'underline', 'italic', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['height', ['height']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ],
+        callbacks: {
+            onImageUpload: function(files) {
+                // Handle image upload
+                for(let i=0; i < files.length; i++) {
+                    uploadImage(files[i], this);
+                }
+            }
+        }
+    });
+    
+    // Live preview updates
+    $('#title').on('input', function() {
+        $('#preview-title').text($(this).val() || 'Post title will appear here');
+    });
+    
+    $('#excerpt').on('input', function() {
+        $('#preview-excerpt').text($(this).val() || 'Post excerpt will appear here');
+    });
+    
+    // Image preview
+    $('#featured_image').on('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#preview-image').html(`
+                    <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 150px;">
+                `);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+
+function saveDraft() {
+    $('#status').val('draft');
+    $('form').submit();
+}
+
+function uploadImage(file, editor) {
+    // This would typically upload to your server
+    // For now, we'll create a placeholder
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        $(editor).summernote('insertImage', e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+</script>
+{% endblock %} 
