@@ -16,7 +16,7 @@ A professional personal blog built with Flask, featuring user authentication, CR
 - **Backend**: Flask, SQLAlchemy, Flask-Login
 - **Frontend**: Bootstrap 5, HTML5, CSS3, JavaScript
 - **Database**: SQLite
-- **Deployment**: Vercel
+- **Deployment**: Railway
 
 ## Quick Start
 
@@ -46,10 +46,10 @@ A professional personal blog built with Flask, featuring user authentication, CR
 
 ## Deployment
 
-This project is configured for Vercel deployment:
+This project is configured for Railway deployment:
 
 1. **Push to GitHub**
-2. **Connect to Vercel**
+2. **Connect to Railway**
 3. **Automatic deployment**
 
 ## Project Structure
@@ -58,7 +58,8 @@ This project is configured for Vercel deployment:
 personal-blog/
 ├── app.py              # Main Flask application
 ├── requirements.txt    # Python dependencies
-├── vercel.json        # Vercel configuration
+├── railway.json       # Railway configuration
+├── Procfile          # Railway process file
 ├── templates/         # HTML templates
 ├── static/           # CSS, JS, images
 └── instance/         # Database files
@@ -66,7 +67,7 @@ personal-blog/
 
 ## Live Demo
 
-Visit: [Your Vercel URL here]
+Visit: [Your Railway URL here]
 
 ---
 
