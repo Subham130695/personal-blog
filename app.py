@@ -180,7 +180,19 @@ def index():
 @app.route('/post/<slug>')
 def post(slug):
     """Display individual blog post."""
-    post = Post.query.filter_by(slug=slug, status='published').first_or_404()
+    # Allow admins to view all posts, and users to view their own posts regardless of status
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            # Admin can view all posts
+            post = Post.query.filter_by(slug=slug).first_or_404()
+        else:
+            # Regular users can view published posts or their own posts
+            post = Post.query.filter_by(slug=slug).first_or_404()
+            if post.status != 'published' and post.user_id != current_user.id:
+                abort(404)  # User can't view other users' draft/archived posts
+    else:
+        # Non-authenticated users can only see published posts
+        post = Post.query.filter_by(slug=slug, status='published').first_or_404()
     return render_template('post.html', post=post)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -342,15 +354,25 @@ def edit_post(post_id):
 @login_required
 def delete_post(post_id):
     """Delete blog post."""
-    post = Post.query.get_or_404(post_id)
-    
-    if post.user_id != current_user.id and not current_user.is_admin:
-        abort(403)
-    
-    db.session.delete(post)
-    db.session.commit()
-    flash('Post deleted successfully!', 'success')
-    return redirect(url_for('dashboard'))
+    try:
+        post = Post.query.get_or_404(post_id)
+        
+        if post.user_id != current_user.id and not current_user.is_admin:
+            abort(403)
+        
+        # Store post title for flash message
+        post_title = post.title
+        
+        db.session.delete(post)
+        db.session.commit()
+        
+        flash(f'Post "{post_title}" deleted successfully!', 'success')
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting post. Please try again.', 'error')
+        return redirect(url_for('dashboard'))
 
 @app.route('/about')
 def about():

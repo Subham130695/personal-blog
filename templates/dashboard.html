@@ -2,6 +2,81 @@
 
 {% block title %}Dashboard - Personal Blog{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Prevent modal overlapping issues */
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal {
+    z-index: 1050;
+}
+
+/* Ensure proper modal positioning */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Loading state for delete buttons */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Prevent table row issues */
+.table tbody tr {
+    position: relative;
+}
+
+/* Ensure modals are properly positioned */
+.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1050;
+}
+
+/* Additional fixes for rendering issues */
+.modal-backdrop.show {
+    opacity: 0.5;
+}
+
+.modal.show {
+    display: block !important;
+}
+
+/* Prevent any table rendering issues */
+.table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Ensure proper button states */
+.btn:disabled {
+    cursor: not-allowed;
+}
+
+/* Prevent any flash of unstyled content */
+.delete-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row">
@@ -116,40 +191,16 @@
                                                        title="Edit Post">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <button type="button" 
-                                                            class="btn btn-sm btn-outline-danger" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#deleteModal{{ post.id }}"
-                                                            title="Delete Post">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                                                                         <button type="button" 
+                                                             class="btn btn-sm btn-outline-danger delete-btn" 
+                                                             data-post-id="{{ post.id }}"
+                                                             data-post-title="{{ post.title }}"
+                                                             title="Delete Post">
+                                                         <i class="fas fa-trash"></i>
+                                                     </button>
                                                 </div>
                                             </td>
-                                        </tr>
-                                        
-                                        <!-- Delete Modal -->
-                                        <div class="modal fade" id="deleteModal{{ post.id }}" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Confirm Delete</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p>Are you sure you want to delete "<strong>{{ post.title }}</strong>"?</p>
-                                                        <p class="text-muted">This action cannot be undone.</p>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" class="d-inline">
-                                                            <button type="submit" class="btn btn-danger">
-                                                                <i class="fas fa-trash me-2"></i>Delete Post
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                                                                 </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -218,6 +269,80 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
+         </div>
+ </div>
+
+ <!-- Single Delete Modal -->
+ <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-dialog-centered">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <p>Are you sure you want to delete "<strong id="deletePostTitle"></strong>"?</p>
+                 <p class="text-muted">This action cannot be undone.</p>
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                 <form method="POST" id="deleteForm" class="d-inline">
+                     <button type="submit" class="btn btn-danger" id="confirmDelete">
+                         <i class="fas fa-trash me-2"></i>Delete Post
+                     </button>
+                 </form>
+             </div>
+         </div>
+     </div>
+ </div>
+
+  <!-- Delete Confirmation JavaScript -->
+ <script>
+ document.addEventListener('DOMContentLoaded', function() {
+     // Handle delete button clicks
+     const deleteButtons = document.querySelectorAll('.delete-btn');
+     
+     deleteButtons.forEach(button => {
+         button.addEventListener('click', function(e) {
+             e.preventDefault();
+             
+             // Get post data
+             const postId = this.getAttribute('data-post-id');
+             const postTitle = this.getAttribute('data-post-title');
+             
+             // Update modal content
+             document.getElementById('deletePostTitle').textContent = postTitle;
+             document.getElementById('deleteForm').action = `/post/${postId}/delete`;
+             
+             // Show modal
+             const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+             modal.show();
+         });
+     });
+     
+     // Handle delete confirmation
+     const confirmDeleteBtn = document.getElementById('confirmDelete');
+     
+     confirmDeleteBtn.addEventListener('click', function(e) {
+         // Show loading state
+         const originalText = this.innerHTML;
+         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+         this.disabled = true;
+         this.classList.add('btn-loading');
+         
+         // Submit the form
+         setTimeout(() => {
+             document.getElementById('deleteForm').submit();
+         }, 100);
+     });
+     
+     // Reset modal when hidden
+     document.getElementById('deleteModal').addEventListener('hidden.bs.modal', function() {
+         const confirmBtn = document.getElementById('confirmDelete');
+         confirmBtn.disabled = false;
+         confirmBtn.classList.remove('btn-loading');
+         confirmBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Post';
+     });
+ });
+ </script>
 {% endblock %} 
