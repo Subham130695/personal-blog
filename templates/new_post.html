@@ -2,6 +2,10 @@
 
 {% block title %}Create New Post - Personal Blog{% endblock %}
 
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -105,21 +109,88 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
 <script>
-// Fallback for Save as Draft button (in case jQuery doesn't load)
-function saveDraftFallback() {
-    const button = document.getElementById('saveDraftBtn');
-    if (button.disabled) return; // Prevent double submission
-    
-    // Show loading state
-    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    button.disabled = true;
-    
-    document.getElementById('status').value = 'draft';
-    document.querySelector('form').submit();
-}
-
 $(document).ready(function() {
+    // Initialize Summernote editor with full functionality
+    $('#content').summernote({
+        height: 400,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'underline', 'italic', 'strikethrough', 'clear']],
+            ['fontname', ['fontname']],
+            ['fontsize', ['fontsize']],
+            ['color', ['color', 'backcolor']],
+            ['para', ['ul', 'ol', 'paragraph', 'height']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video', 'hr']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ],
+        fontNames: ['Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia', 'Impact', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Inter'],
+        fontNamesIgnoreCheck: ['Inter'],
+        fontSizes: ['8', '9', '10', '11', '12', '14', '16', '18', '24', '36', '48', '64'],
+        styleTags: [
+            'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+        ],
+        popover: {
+            image: [
+                ['image', ['resizeFull', 'resizeHalf', 'resizeQuarter', 'resizeNone']],
+                ['float', ['floatLeft', 'floatRight', 'floatNone']],
+                ['remove', ['removeMedia']]
+            ],
+            link: [
+                ['link', ['linkDialogShow', 'unlink']]
+            ],
+            table: [
+                ['add', ['addRowDown', 'addRowUp', 'addColLeft', 'addColRight']],
+                ['delete', ['deleteRow', 'deleteCol', 'deleteTable']],
+            ],
+            air: [
+                ['color', ['color']],
+                ['font', ['bold', 'underline', 'italic']],
+                ['para', ['ul', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture']]
+            ]
+        },
+        callbacks: {
+            onImageUpload: function(files) {
+                // Handle image upload
+                for(let i=0; i < files.length; i++) {
+                    uploadImage(files[i], this);
+                }
+            },
+            onPaste: function (e) {
+                // Handle pasted content
+                var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('Text');
+                e.preventDefault();
+                document.execCommand('insertText', false, bufferText);
+            }
+        },
+        // Enable all formatting options
+        airMode: false,
+        disableResizeEditor: false,
+        height: 400,
+        minHeight: 200,
+        maxHeight: 600,
+        focus: true,
+        tabSize: 2,
+        styleTags: [
+            'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
+        ],
+        // Color palette for text and background colors
+        colorButton: {
+            foreColor: '#000000',
+            backColor: '#FFFFFF',
+            colors: [
+                '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+                '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
+                '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+                '#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#a4c2f4', '#c3a4d2', '#d5a6bd'
+            ]
+        }
+    });
+    
     // Live preview updates
     $('#title').on('input', function() {
         $('#preview-title').text($(this).val() || 'Post title will appear here');
@@ -155,5 +226,28 @@ $(document).ready(function() {
         $('form').submit();
     });
 });
+
+// Fallback for Save as Draft button (in case jQuery doesn't load)
+function saveDraftFallback() {
+    const button = document.getElementById('saveDraftBtn');
+    if (button.disabled) return; // Prevent double submission
+    
+    // Show loading state
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    button.disabled = true;
+    
+    document.getElementById('status').value = 'draft';
+    document.querySelector('form').submit();
+}
+
+function uploadImage(file, editor) {
+    // This would typically upload to your server
+    // For now, we'll create a placeholder
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        $(editor).summernote('insertImage', e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
 </script>
 {% endblock %} 
