@@ -18,6 +18,14 @@
     border-bottom-left-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
 }
+#content {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+.ql-editor:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
 </style>
 {% endblock %}
 
@@ -47,7 +55,8 @@
                                     <label for="content" class="form-label">
                                         <i class="fas fa-edit me-2"></i>Content
                                     </label>
-                                    <textarea class="form-control" id="content" name="content" rows="15" required data-initial-content="{{ post.content|safe }}">{{ post.content }}</textarea>
+                                    <div id="content" data-initial-content="{{ post.content|safe }}"></div>
+                                    <textarea name="content" id="content-hidden" style="display: none;">{{ post.content }}</textarea>
                                 </div>
                             </div>
                             
@@ -141,7 +150,7 @@ var quill;
 $(document).ready(function() {
     console.log('Document ready, initializing Quill editor...');
     
-    // Initialize Quill editor
+    // Initialize Quill editor on the div
     quill = new Quill('#content', {
         theme: 'snow',
         modules: {
@@ -160,11 +169,16 @@ $(document).ready(function() {
     });
     
     console.log('Quill editor initialized successfully!');
+    console.log('Quill instance:', quill);
+    console.log('Quill root element:', quill.root);
     
     // Set initial content if editing existing post
     var initialContent = $('#content').attr('data-initial-content');
     if (initialContent) {
+        console.log('Setting initial content:', initialContent);
         quill.root.innerHTML = initialContent;
+        // Also update the hidden textarea
+        $('#content-hidden').val(initialContent);
     }
     
     // Update hidden textarea before form submission
@@ -177,7 +191,7 @@ $(document).ready(function() {
         console.log('Content from Quill:', content);
         
         // Update the hidden textarea
-        $('#content').val(content);
+        $('#content-hidden').val(content);
         
         // Now submit the form
         console.log('Submitting form...');
@@ -206,6 +220,17 @@ $(document).ready(function() {
             reader.readAsDataURL(file);
         }
     });
+    
+    // Test Quill functionality
+    setTimeout(function() {
+        console.log('Testing Quill functionality...');
+        console.log('Quill toolbar:', quill.getModule('toolbar'));
+        console.log('Quill is ready:', quill.isEnabled());
+        
+        // Test if we can set content
+        quill.setText('Test content');
+        console.log('Test content set, current content:', quill.root.innerHTML);
+    }, 1000);
 });
 
 function saveDraft() {
@@ -221,7 +246,7 @@ function saveDraft() {
     console.log('Content from Quill in saveDraft:', content);
     
     // Update the hidden textarea
-    $('#content').val(content);
+    $('#content-hidden').val(content);
     
     // Set status to draft and submit
     $('#status').val('draft');

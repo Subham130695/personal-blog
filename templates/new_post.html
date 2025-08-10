@@ -18,6 +18,14 @@
     border-bottom-left-radius: 0.375rem;
     border-bottom-right-radius: 0.375rem;
 }
+#content {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+.ql-editor:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
 </style>
 {% endblock %}
 
@@ -47,8 +55,8 @@
                                     <label for="content" class="form-label">
                                         <i class="fas fa-edit me-2"></i>Content
                                     </label>
-                                    <textarea class="form-control" id="content" name="content" rows="15" 
-                                              placeholder="Write your blog post content here..." required></textarea>
+                                    <div id="content"></div>
+                                    <textarea name="content" id="content-hidden" style="display: none;"></textarea>
                                 </div>
                             </div>
                             
@@ -162,7 +170,7 @@ $(document).ready(function() {
         console.log('Content from Quill:', content);
         
         // Update the hidden textarea
-        $('#content').val(content);
+        $('#content-hidden').val(content);
         
         // Now submit the form
         console.log('Submitting form...');
@@ -211,7 +219,7 @@ $(document).ready(function() {
         console.log('Content from Quill in saveDraft:', content);
         
         // Update the hidden textarea
-        $('#content').val(content);
+        $('#content-hidden').val(content);
         
         // Set status to draft and submit
         $('#status').val('draft');
@@ -235,7 +243,7 @@ function saveDraftFallback() {
     if (typeof quill !== 'undefined') {
         var content = quill.root.innerHTML;
         console.log('Content from Quill in fallback:', content);
-        document.getElementById('content').value = content;
+        document.getElementById('content-hidden').value = content;
     }
     
     document.getElementById('status').value = 'draft';
