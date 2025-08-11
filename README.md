@@ -96,7 +96,7 @@ personal-blog/
 
 ## Live Demo
 
-Visit: https://web-production-848f.up.railway.app
+Visit: https://web-production-0d1dd.up.railway.app/
 
 ---
 
