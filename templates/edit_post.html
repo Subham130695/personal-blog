@@ -26,6 +26,75 @@
     border-color: #86b7fe;
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
+
+/* Ensure toolbar buttons are clickable and properly styled */
+.ql-toolbar button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ql-toolbar button:hover {
+    background-color: #e9ecef;
+}
+
+.ql-toolbar button.ql-active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Ensure toolbar is visible and functional */
+.ql-toolbar.ql-snow {
+    border: 1px solid #ced4da;
+    border-bottom: none;
+    background: #f8f9fa;
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+.ql-container.ql-snow {
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+    background: white;
+}
+
+/* Enhanced styling for new toolbar elements */
+.ql-editor blockquote {
+    border-left: 4px solid #ccc;
+    margin: 0;
+    padding-left: 16px;
+    font-style: italic;
+}
+
+.ql-editor pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+}
+
+.ql-editor code {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+/* Better spacing for toolbar groups */
+.ql-toolbar .ql-formats {
+    margin-right: 15px;
+}
+
+.ql-toolbar .ql-formats:last-child {
+    margin-right: 0;
+}
+
+
 </style>
 {% endblock %}
 
@@ -154,16 +223,64 @@ $(document).ready(function() {
     quill = new Quill('#content', {
         theme: 'snow',
         modules: {
-            toolbar: [
-                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                ['bold', 'italic', 'underline', 'strike'],
-                [{ 'color': [] }, { 'background': [] }],
-                [{ 'font': [] }, { 'size': [] }],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                [{ 'align': [] }],
-                ['link', 'image'],
-                ['clean']
-            ]
+            toolbar: {
+                container: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'font': [] }, { 'size': [] }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'direction': 'rtl' }, { 'align': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['blockquote', 'code-block'],
+                    ['link', 'image'],
+                    ['clean']
+                ],
+                handlers: {
+                    'link': function() {
+                        const url = prompt('Enter URL:');
+                        if (url) {
+                            const range = quill.getSelection();
+                            if (range && range.length > 0) {
+                                quill.format('link', url);
+                            } else {
+                                // If no text is selected, insert a link
+                                const linkText = prompt('Enter link text:') || url;
+                                const index = quill.getSelection() ? quill.getSelection().index : 0;
+                                quill.insertText(index, linkText, 'link', url);
+                            }
+                        }
+                    },
+                    'image': function() {
+                        // Create a hidden file input
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.accept = 'image/*';
+                        fileInput.style.display = 'none';
+                        
+                        // Add event listener for file selection
+                        fileInput.addEventListener('change', function(e) {
+                            const file = e.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const range = quill.getSelection();
+                                    const index = range ? range.index : 0;
+                                    quill.insertEmbed(index, 'image', e.target.result);
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                            // Remove the file input from DOM
+                            document.body.removeChild(fileInput);
+                        });
+                        
+                        // Add to DOM and trigger click
+                        document.body.appendChild(fileInput);
+                        fileInput.click();
+                    },
+
+                }
+            }
         },
         placeholder: 'Write your blog post content here...'
     });
@@ -171,6 +288,30 @@ $(document).ready(function() {
     console.log('Quill editor initialized successfully!');
     console.log('Quill instance:', quill);
     console.log('Quill root element:', quill.root);
+    
+    // Test toolbar functionality after initialization
+    setTimeout(() => {
+        const toolbar = quill.getModule('toolbar');
+        if (toolbar) {
+            console.log('Toolbar module loaded successfully');
+            console.log('Available toolbar handlers:', Object.keys(toolbar.handlers));
+            
+            // Test if link and image handlers are properly attached
+            if (toolbar.handlers.link) {
+                console.log('Link handler is properly attached');
+            } else {
+                console.error('Link handler is missing');
+            }
+            
+            if (toolbar.handlers.image) {
+                console.log('Image handler is properly attached');
+            } else {
+                console.error('Image handler is missing');
+            }
+        } else {
+            console.error('Toolbar module not found');
+        }
+    }, 500);
     
     // Set initial content if editing existing post
     var initialContent = $('#content').attr('data-initial-content');
@@ -263,5 +404,9 @@ function uploadImage(file, editor) {
     };
     reader.readAsDataURL(file);
 }
+
+
+
+
 </script>
 {% endblock %} 

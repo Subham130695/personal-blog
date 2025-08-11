@@ -8,6 +8,7 @@ Company: [Your Company]
 """
 
 import os
+from dotenv import load_dotenv
 from datetime import datetime, timezone, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import markdown
 import bleach
+
+# Load environment variables from a local .env file if present (not committed)
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -154,6 +158,8 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+
 def create_slug(title):
     """Create URL-friendly slug from title."""
     import re
@@ -164,8 +170,20 @@ def create_slug(title):
 def sanitize_html(html_content):
     """Sanitize HTML content for security."""
     allowed_tags = ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-                   'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img']
-    allowed_attrs = {'a': ['href'], 'img': ['src', 'alt', 'title']}
+                   'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'span', 'div']
+    allowed_attrs = {
+        'a': ['href'], 
+        'img': ['src', 'alt', 'title'],
+        'span': ['style', 'class'],
+        'div': ['style', 'class'],
+        'p': ['style', 'class'],
+        'h1': ['style', 'class'],
+        'h2': ['style', 'class'],
+        'h3': ['style', 'class'],
+        'h4': ['style', 'class'],
+        'h5': ['style', 'class'],
+        'h6': ['style', 'class']
+    }
     return bleach.clean(html_content, tags=allowed_tags, attributes=allowed_attrs)
 
 # Routes
@@ -420,6 +438,56 @@ def admin_contacts():
     contacts = Contact.query.order_by(Contact.created_at.desc()).all()
     return render_template('admin_contacts.html', contacts=contacts)
 
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    """Admin page to view all users in the system."""
+    if not current_user.is_admin:
+        abort(403)
+    
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    """Delete a non-admin user and their related data."""
+    if not current_user.is_admin:
+        abort(403)
+
+    user = User.query.get_or_404(user_id)
+
+    if user.is_admin:
+        flash('Cannot delete admin users.', 'error')
+        return redirect(url_for('admin_users'))
+
+    try:
+        # Delete replies authored by this user (as admin replies)
+        Reply.query.filter_by(admin_id=user.id).delete(synchronize_session=False)
+
+        # Delete user's posts (and optionally their uploaded images)
+        user_posts = Post.query.filter_by(user_id=user.id).all()
+        for post in user_posts:
+            if post.featured_image:
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], post.featured_image)
+                try:
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
+                except Exception:
+                    pass
+            db.session.delete(post)
+
+        # Finally delete the user
+        db.session.delete(user)
+        db.session.commit()
+
+        flash('User and all related data deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting user. Please try again.', 'error')
+
+    return redirect(url_for('admin_users'))
+
 @app.route('/admin/contact/<int:contact_id>')
 @login_required
 def view_contact(contact_id):
@@ -463,6 +531,32 @@ def reply_contact(contact_id):
     
     return render_template('reply_contact.html', contact=contact)
 
+@app.route('/admin/contact/<int:contact_id>/delete', methods=['POST'])
+@login_required
+def delete_contact(contact_id):
+    """Delete a contact message."""
+    if not current_user.is_admin:
+        abort(403)
+    
+    try:
+        contact = Contact.query.get_or_404(contact_id)
+        
+        # Store contact details for flash message
+        contact_email = contact.email
+        contact_subject = contact.subject
+        
+        # Delete the contact (this will also delete associated replies due to cascade)
+        db.session.delete(contact)
+        db.session.commit()
+        
+        flash(f'Contact message "{contact_subject}" from {contact_email} deleted successfully!', 'success')
+        return redirect(url_for('admin_contacts'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting contact message. Please try again.', 'error')
+        return redirect(url_for('admin_contacts'))
+
 @app.route('/my-messages')
 @login_required
 def my_messages():
@@ -490,21 +584,29 @@ def init_db():
     try:
         with app.app_context():
             db.create_all()
-            
-            # Create admin user if it doesn't exist
-            admin = User.query.filter_by(username='admin').first()
+
+            # Create admin user only if explicit secrets are provided via environment
+            default_admin_username = os.environ.get('ADMIN_USERNAME')
+            default_admin_email = os.environ.get('ADMIN_EMAIL')
+            default_admin_password = os.environ.get('ADMIN_PASSWORD')
+
+            if not all([default_admin_username, default_admin_email, default_admin_password]):
+                print("ADMIN_* environment variables not set. Skipping default admin creation.")
+                return
+
+            admin = User.query.filter_by(username=default_admin_username).first()
             if not admin:
                 admin = User(
-                    username='admin',
-                    email='admin@blog.com',
+                    username=default_admin_username,
+                    email=default_admin_email,
                     first_name='Admin',
                     last_name='User',
                     is_admin=True
                 )
-                admin.set_password('admin123')
+                admin.set_password(default_admin_password)
                 db.session.add(admin)
                 db.session.commit()
-                print("Admin user created: username='admin', password='admin123'")
+                print("Admin user created from environment variables")
             else:
                 print("Admin user already exists")
     except Exception as e:

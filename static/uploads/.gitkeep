@@ -1,2 +1,1 @@
-# This file ensures the uploads directory is tracked in git
-# The directory is needed for file uploads functionality 
+# Keep uploads directory in git without storing user files 

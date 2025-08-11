@@ -1,6 +1,35 @@
-# Personal Blog
+# Personal Blog - Flask
 
-A professional personal blog built with Flask, featuring user authentication, CRUD operations, and a modern responsive design.
+This is a Flask-based blog application with authentication, admin features, and post management.
+
+## Environment Variables
+Create a `.env` file in the project root (do NOT commit this file) with values like:
+
+```
+SECRET_KEY=change-this
+ADMIN_USERNAME=change-admin-username
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change-strong-password
+DATABASE_URL=sqlite:///blog.db
+```
+
+Alternatively, configure these as environment variables in your hosting provider.
+
+## Setup
+
+1. Create a virtual environment and install dependencies:
+```
+pip install -r requirements.txt
+```
+
+2. Run the app:
+```
+python app.py
+```
+
+## Security Notes
+- Do not commit real secrets. Use `.env` locally and environment variables in production.
+- The `.gitignore` in this repo excludes `.env` and SQLite database files by default.
 
 ## Features
 
@@ -40,9 +69,9 @@ A professional personal blog built with Flask, featuring user authentication, CR
 
 ## Admin Access
 
-- **URL**: `/login`
-- **Username**: `admin`
-- **Password**: `admin123`
+- Set the admin credentials via environment variables before first run. Do not commit secrets.
+- Required variables: `ADMIN_USERNAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+- Login URL: `/login`
 
 ## Deployment
 
